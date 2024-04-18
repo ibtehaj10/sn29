@@ -50,7 +50,7 @@ def run(synapse):
         corutines = [call_single_uid]
         return await asyncio.gather(*corutines)
     x = asyncio.run(query_async(call_single()))
-    return
+    return x
 
 
 def generate(prompt):

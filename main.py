@@ -31,6 +31,11 @@ axons = metagraph.axons
 wallet = bittensor.wallet()
 
 
+def run():
+    
+    x = asyncio.run(query_async(call_single()))
+    return
+
 
 def generate(prompt):
     
@@ -72,7 +77,8 @@ def generate(prompt):
         corutines = [call_single_uid]
         return await asyncio.gather(*corutines)
 
-    x = asyncio.run(query_async(call_single()))
+    # x = asyncio.run(query_async(call_single()))
+    x = run()
     li = []
     for i,j in enumerate(x[0]):
         if j.completion != None:

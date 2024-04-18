@@ -32,8 +32,9 @@ wallet = bittensor.wallet()
 
 
 
-custom_sampling_params = PromptRequestSamplingParams(seed=4000)
 def generate(prompt):
+    
+    custom_sampling_params = PromptRequestSamplingParams(seed=4000)
     synapse = PromptRequest(
         query=prompt,
         sampling_params=custom_sampling_params,

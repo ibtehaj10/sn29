@@ -31,8 +31,24 @@ axons = metagraph.axons
 wallet = bittensor.wallet()
 
 
-def run():
-    
+def run(synapse):
+    def call_single():
+        call_single_uid = dendrite(
+        axons[:9],
+        # synapse=synapse,
+        timeout=300.0,
+
+        # bt.axon(),
+        synapse=synapse
+
+            # hotkey='ni'
+        )
+        # print("UID -------  ",uid)
+        return call_single_uid
+
+    async def query_async(call_single_uid):
+        corutines = [call_single_uid]
+        return await asyncio.gather(*corutines)
     x = asyncio.run(query_async(call_single()))
     return
 
@@ -51,34 +67,18 @@ def generate(prompt):
         context=None,  # Additional context if necessary
         # metadata={"version": "1.0", "experiment": "geo-query"}  # Additional metadata
     )
-    async def call_single(uid, synapse):
-        neuron = metagraph.neurons[uid]
+    # async def call_single(uid, synapse):
+    #     neuron = metagraph.neurons[uid]
 
-        # Extracting IP and port from the AxonInfo object
-        ip_address = neuron.axon_info.ip  # Assuming the IP address is correctly stored here
-        port = neuron.axon_info.port      # Assuming the port is correctly stored here
+    #     # Extracting IP and port from the AxonInfo object
+    #     ip_address = neuron.axon_info.ip  # Assuming the IP address is correctly stored here
+    #     port = neuron.axon_info.port      # Assuming the port is correctly stored here
 
         # Now use ip_address and port in your dendrite.forward call
-    def call_single():
-        call_single_uid = dendrite(
-            axons[:9],
-            # synapse=synapse,
-            timeout=300.0,
 
-            # bt.axon(),
-            synapse=synapse
-
-            # hotkey='ni'
-        )
-        # print("UID -------  ",uid)
-        return call_single_uid
-
-    async def query_async(call_single_uid):
-        corutines = [call_single_uid]
-        return await asyncio.gather(*corutines)
 
     # x = asyncio.run(query_async(call_single()))
-    x = run()
+    x = run(synapse)
     li = []
     for i,j in enumerate(x[0]):
         if j.completion != None:

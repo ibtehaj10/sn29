@@ -1,100 +1,50 @@
+from flask import Flask, request, jsonify
+from bittensor import Keypair
 import bittensor as bt
 import asyncio
-import torchvision.transforms as transforms
-import time
-from PIL import Image
-# from bittensor_utils import send_request_to_bittensor
-from fractal.fractal.protocol import PromptRequest, PromptRequestSamplingParams
-from flask import Flask, request, jsonify
-from bittensor import Keypair, metagraph, Keypair
-from bittensor import bittensor, wallet
-import pydantic
-
-import torch
-import numpy as np
+from flask_executor import Executor
 
 app = Flask(__name__)
+executor = Executor(app)  # Helps manage thread pools for non-async functions
 
+def create_dendrite():
+    hotkey = Keypair.create_from_mnemonic("fever unlock seven sphere robot royal feature post tennis ivory black when")
+    return bt.Dendrite(wallet=hotkey), hotkey
 
+async def run_dendrite(dendrite, synapse):
+    """ Run the dendrite call asynchronously and handle exceptions safely. """
+    try:
+        response = await dendrite(axons[:9], synapse=synapse, timeout=300.0)
+        return response
+    except Exception as e:
+        print(f"Error during dendrite run: {e}")
+        return None
 
-hotkey = Keypair.create_from_mnemonic("fever unlock seven sphere robot royal feature post tennis ivory black when")
-dendrite = bt.dendrite(wallet=hotkey)
-bt.trace()
+def generate(prompt, dendrite):
+    from fractal.fractal.protocol import PromptRequest, PromptRequestSamplingParams
 
-metagraph = bt.metagraph(29, network="finney")
-metagraph.sync()
-neuron = metagraph.neurons[29]
-
-
-
-axons = metagraph.axons
-wallet = bittensor.wallet()
-
-
-def run(synapse):
-    def call_single():
-        call_single_uid = dendrite(
-        axons[:9],
-        # synapse=synapse,
-        timeout=300.0,
-
-        # bt.axon(),
-        synapse=synapse
-
-            # hotkey='ni'
-        )
-        # print("UID -------  ",uid)
-        return call_single_uid
-
-    async def query_async(call_single_uid):
-        corutines = [call_single_uid]
-        return await asyncio.gather(*corutines)
-    x = asyncio.run(query_async(call_single()))
-    return x
-
-
-def generate(prompt):
-    
     custom_sampling_params = PromptRequestSamplingParams(seed=4000)
     synapse = PromptRequest(
         query=prompt,
         sampling_params=custom_sampling_params,
-        completion=None,  # Assuming this will be filled after processing
+        completion=None,
         required_hash_fields=["query", "sampling_params"],
-        timeout=300,  # Timeout in seconds
-        response_format="json",  # Expected response format
-        language="en",  # Language of the query
-        context=None,  # Additional context if necessary
-        # metadata={"version": "1.0", "experiment": "geo-query"}  # Additional metadata
+        timeout=300,
+        response_format="json",
+        language="en"
     )
-    # async def call_single(uid, synapse):
-    #     neuron = metagraph.neurons[uid]
-
-    #     # Extracting IP and port from the AxonInfo object
-    #     ip_address = neuron.axon_info.ip  # Assuming the IP address is correctly stored here
-    #     port = neuron.axon_info.port      # Assuming the port is correctly stored here
-
-        # Now use ip_address and port in your dendrite.forward call
-
-
-    # x = asyncio.run(query_async(call_single()))
-    x = run(synapse)
-    li = []
-    for i,j in enumerate(x[0]):
-        if j.completion != None:
-            print(i)
-            li.append(i)
-
-    data = x[0][li[0]].completion
-    return data
-
+    
+    response = asyncio.run(run_dendrite(dendrite, synapse))
+    if response and response[0].completion is not None:
+        return response[0].completion
+    return "No completion found or error occurred."
 
 @app.route('/video', methods=['POST'])
-def video():
-    prompt = request.json['prompt']
-    v = generate(prompt)
-    return v
-
+async def video():
+    dendrite, _ = create_dendrite()
+    prompt = request.json.get('prompt', '')
+    result = generate(prompt, dendrite)
+    return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(port=8060,host="0.0.0.0")
+    app.run(port=8060, host="0.0.0.0")

@@ -50,6 +50,7 @@ def generate(prompt, dendrite, axons):
 async def video():
     dendrite, _ = create_dendrite()
     prompt = request.json.get('prompt', '')
+    print("prompt : ",prompt)
     axons = select_axons()  # This function needs to be defined to choose the right axons
     result = generate(prompt, dendrite, axons)
     return jsonify(result)

@@ -12,7 +12,7 @@ metagraph.sync()
 # Function to create a dendrite and hotkey pair
 def create_dendrite():
     hotkey = Keypair.create_from_mnemonic("fever unlock seven sphere robot royal feature post tennis ivory black when")
-    return bt.Dendrite(wallet=hotkey), hotkey
+    return bt.dendrite(wallet=hotkey), hotkey
 
 # Function to handle asynchronous calls to multiple neurons
 async def run_dendrite(dendrite, axons, synapse):

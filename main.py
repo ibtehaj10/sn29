@@ -6,7 +6,7 @@ from flask_executor import Executor
 
 app = Flask(__name__)
 executor = Executor(app)  # Helps manage thread pools for non-async functions
-
+axons = metagraph.axons
 def create_dendrite():
     hotkey = Keypair.create_from_mnemonic("fever unlock seven sphere robot royal feature post tennis ivory black when")
     return bt.dendrite(wallet=hotkey), hotkey

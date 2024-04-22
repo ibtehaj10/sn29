@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from bittensor import Keypair
+from bittensor import Keypair, metagraph
 import bittensor as bt
 import asyncio
 from flask_executor import Executor

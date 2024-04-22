@@ -9,7 +9,7 @@ executor = Executor(app)  # Helps manage thread pools for non-async functions
 
 def create_dendrite():
     hotkey = Keypair.create_from_mnemonic("fever unlock seven sphere robot royal feature post tennis ivory black when")
-    return bt.Dendrite(wallet=hotkey), hotkey
+    return bt.dendrite(wallet=hotkey), hotkey
 
 async def run_dendrite(dendrite, synapse):
     """ Run the dendrite call asynchronously and handle exceptions safely. """

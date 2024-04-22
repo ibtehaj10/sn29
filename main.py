@@ -1,30 +1,31 @@
 from flask import Flask, request, jsonify
-from bittensor import Keypair, metagraph
-import bittensor as bt
 import asyncio
-from flask_executor import Executor
+import bittensor as bt
+from bittensor import Keypair
 
 app = Flask(__name__)
-executor = Executor(app) # Helps manage thread pools for non-async functions
+
 
 
 metagraph = bt.metagraph(29, network="finney")
 metagraph.sync()
-axons = metagraph.axons
+# Function to create a dendrite and hotkey pair
 def create_dendrite():
     hotkey = Keypair.create_from_mnemonic("fever unlock seven sphere robot royal feature post tennis ivory black when")
-    return bt.dendrite(wallet=hotkey), hotkey
+    return bt.Dendrite(wallet=hotkey), hotkey
 
-async def run_dendrite(dendrite, synapse):
-    """ Run the dendrite call asynchronously and handle exceptions safely. """
-    try:
-        response = await dendrite(axons[:9], synapse=synapse, timeout=300.0)
-        return response
-    except Exception as e:
-        print(f"Error during dendrite run: {e}")
-        return None
+# Function to handle asynchronous calls to multiple neurons
+async def run_dendrite(dendrite, axons, synapse):
+    """ Run the dendrite call asynchronously across multiple axons and handle exceptions safely. """
+    tasks = []
+    for axon in axons:
+        task = asyncio.create_task(dendrite(axon, synapse=synapse, timeout=300.0))
+        tasks.append(task)
+    responses = await asyncio.gather(*tasks, return_exceptions=True)
+    return responses
 
-def generate(prompt, dendrite):
+# Function to generate response based on a prompt
+def generate(prompt, dendrite, axons):
     from fractal.fractal.protocol import PromptRequest, PromptRequestSamplingParams
 
     custom_sampling_params = PromptRequestSamplingParams(seed=4000)
@@ -38,17 +39,27 @@ def generate(prompt, dendrite):
         language="en"
     )
     
-    response = asyncio.run(run_dendrite(dendrite, synapse))
-    if response and response[0].completion is not None:
-        return response[0].completion
-    return "No completion found or error occurred."
+    response = asyncio.run(run_dendrite(dendrite, axons, synapse))
+    completions = [resp.completion for resp in response if resp and resp.completion is not None]
+    if completions:
+        return completions
+    return "No valid completions found or errors occurred."
 
+# Route to handle video generation
 @app.route('/video', methods=['POST'])
 async def video():
     dendrite, _ = create_dendrite()
     prompt = request.json.get('prompt', '')
-    result = generate(prompt, dendrite)
+    axons = select_axons()  # This function needs to be defined to choose the right axons
+    result = generate(prompt, dendrite, axons)
     return jsonify(result)
+
+# Function to select axons
+def select_axons():
+    # Assuming metagraph is globally available or refreshed inside this function
+    # Choose 10 random or top axons based on some criteria
+    axons = metagraph.axons[:10]  # Adjust this selection mechanism as needed
+    return axons
 
 if __name__ == '__main__':
     app.run(port=8060, host="0.0.0.0")
